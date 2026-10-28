@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ledger — Transaction System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap');
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .mono { font-family: 'Geist Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#FAFAFA] text-zinc-900 min-h-screen p-6 md:p-12 antialiased selection:bg-zinc-900 selection:text-white">
+  <div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- Header -->
+    <header class="flex justify-between items-end border-b border-zinc-200/80 pb-6">
+      <div>
+        <p class="text-[11px] uppercase tracking-widest text-zinc-600 font-semibold mb-1">Financial Core</p>
+        <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-zinc-900">Transaction Ledger</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="/docs" target="_blank" class="text-xs text-zinc-600 hover:text-zinc-900 border border-zinc-200 hover:border-zinc-400 bg-white px-3 py-1.5 rounded-md transition shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+          API Specs ↗
+        </a>
+      </div>
+    </header>
+
+    <!-- Top Action Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+      <!-- Card 1: Account Creation -->
+      <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <span class="text-[11px] font-mono uppercase text-zinc-600 tracking-wider">01 / Create</span>
+        <h2 class="text-sm font-medium text-zinc-900 mt-1 mb-4">Open New Account</h2>
+        <form id="createAccountForm" class="space-y-3">
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">Account Holder</label>
+            <input type="text" id="accName" required placeholder="e.g. Alice Cooper" class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:outline-none focus:border-zinc-800 transition">
+          </div>
+          <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-normal py-2 rounded-md text-xs transition">
+            Create Account
+          </button>
+        </form>
+        <p class="text-[11px] text-zinc-600 mt-3">*Initial balance fixed at 0.00</p>
+      </div>
+
+      <!-- Card 2: Transaction Posting -->
+      <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <span class="text-[11px] font-mono uppercase text-zinc-600 tracking-wider">02 / Post</span>
+        <h2 class="text-sm font-medium text-zinc-900 mt-1 mb-4">Post Transaction</h2>
+        <form id="txnForm" class="space-y-3">
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">Target Account</label>
+            <select id="txnAccountSelect" class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-zinc-800 transition"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-zinc-600 mb-1">Type</label>
+              <select id="txnType" class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-2 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-zinc-800">
+                <option value="credit">Credit (+)</option>
+                <option value="debit">Debit (-)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-zinc-600 mb-1">Amount</label>
+              <input type="number" step="0.01" min="0.01" id="txnAmount" placeholder="100.00" required class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-zinc-800">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">Description</label>
+            <input type="text" id="txnDesc" placeholder="e.g. Wire Transfer" required class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-zinc-800">
+          </div>
+          <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-normal py-2 rounded-md text-xs transition">
+            Record Transaction
+          </button>
+        </form>
+      </div>
+
+      <!-- Card 3: Transfer Funds -->
+      <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <span class="text-[11px] font-mono uppercase text-zinc-600 tracking-wider">03 / Settle</span>
+        <h2 class="text-sm font-medium text-zinc-900 mt-1 mb-4">Bilateral Transfer</h2>
+        <form id="transferForm" class="space-y-3">
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">Source Account</label>
+            <select id="xferFromSelect" class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-zinc-800"></select>
+          </div>
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">Destination Account</label>
+            <select id="xferToSelect" class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-zinc-800"></select>
+          </div>
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">Amount</label>
+            <input type="number" step="0.01" min="0.01" id="xferAmount" placeholder="30.00" required class="w-full bg-[#FAFAFA] border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-zinc-800">
+          </div>
+          <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-normal py-2 rounded-md text-xs transition">
+            Execute Atomic Transfer
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Accounts List & Ledger Statement -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      
+      <!-- Account Explorer -->
+      <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xs font-mono uppercase text-zinc-600 tracking-wider">Accounts</h2>
+          <button onclick="fetchAccounts()" class="text-xs text-zinc-600 hover:text-zinc-900 transition">↻ Sync</button>
+        </div>
+        <div id="accountsList" class="space-y-2 overflow-y-auto max-h-96 pr-1"></div>
+      </div>
+
+      <!-- Transaction Log -->
+      <div class="md:col-span-2 bg-white border border-zinc-200 rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-zinc-100">
+          <div>
+            <h2 class="text-xs font-mono uppercase text-zinc-600 tracking-wider">Ledger Statement</h2>
+            <p id="activeAccountNotice" class="text-xs text-zinc-600 mt-0.5">Select an account to view audit records</p>
+          </div>
+          <div class="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-md border border-zinc-200/50">
+            <button onclick="loadTransactions(selectedAccountId, 'all')" class="text-[11px] text-zinc-600 hover:text-zinc-900 px-2 py-0.5 rounded transition">All</button>
+            <button onclick="loadTransactions(selectedAccountId, 'credit')" class="text-[11px] text-zinc-600 hover:text-zinc-900 px-2 py-0.5 rounded transition">Credits</button>
+            <button onclick="loadTransactions(selectedAccountId, 'debit')" class="text-[11px] text-zinc-600 hover:text-zinc-900 px-2 py-0.5 rounded transition">Debits</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-zinc-600 border-b border-zinc-200 sticky top-0 bg-white">
+              <tr>
+                <th class="py-2.5 px-3 font-medium">Type</th>
+                <th class="py-2.5 px-3 font-medium">Amount</th>
+                <th class="py-2.5 px-3 font-medium">Description</th>
+                <th class="py-2.5 px-3 font-medium">Reference</th>
+                <th class="py-2.5 px-3 font-medium text-right">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="txnTableBody" class="divide-y divide-zinc-100">
+              <tr><td colspan="5" class="py-8 text-center text-zinc-400">No account selected.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 hidden bg-zinc-900 text-white text-xs px-4 py-2.5 rounded-lg shadow-lg border border-zinc-800 transition"></div>
+
+  </div>
+
+  <script>
+    let accounts = [];
+    let selectedAccountId = null;
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.className = `fixed bottom-6 right-6 ${isError ? 'bg-zinc-900 border-l-2 border-l-rose-500 text-zinc-100' : 'bg-zinc-900 text-zinc-100'} text-xs px-4 py-2.5 rounded-lg shadow-lg transition z-50`;
+      toast.innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+
+    async function fetchAccounts() {
+      const container = document.getElementById('accountsList');
+      
+      // 1. Fetch persistent account list from backend
+      try {
+        const res = await fetch('/api/v1/accounts');
+        if (res.ok) {
+          accounts = await res.json();
+        }
+      } catch (err) {
+        console.error("Error loading accounts:", err);
+      }
+
+      container.innerHTML = accounts.length === 0 ? '<p class="text-xs text-zinc-400 py-4">No accounts created yet.</p>' : '';
+      
+      const selectBoxes = [
+        document.getElementById('txnAccountSelect'),
+        document.getElementById('xferFromSelect'),
+        document.getElementById('xferToSelect')
+      ];
+      selectBoxes.forEach(s => s.innerHTML = '');
+
+      for (const acc of accounts) {
+        // Fetch current live balance
+        const res = await fetch(`/api/v1/accounts/${acc.id}/balance`);
+        const balData = await res.json();
+        const balance = balData.balance !== undefined ? balData.balance : (balData.data ? balData.data.balance : acc.balance);
+
+        const card = document.createElement('div');
+        const isSelected = acc.id === selectedAccountId;
+        card.className = `p-3 rounded-lg cursor-pointer border transition text-left ${isSelected ? 'bg-zinc-100 border-zinc-400' : 'bg-white border-zinc-200 hover:border-zinc-300'}`;
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-medium text-zinc-900 truncate">${acc.name}</span>
+            <span class="mono text-xs font-semibold text-zinc-900">$${Number(balance).toFixed(2)}</span>
+          </div>
+          <p class="mono text-[10px] text-zinc-600 truncate mt-1">${acc.id}</p>
+        `;
+        card.onclick = () => selectAccount(acc.id, acc.name);
+        container.appendChild(card);
+
+        selectBoxes.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = acc.id;
+          opt.innerText = `${acc.name} ($${Number(balance).toFixed(2)})`;
+          s.appendChild(opt);
+        });
+      }
+    }
+
+    function selectAccount(id, name) {
+      selectedAccountId = id;
+      document.getElementById('activeAccountNotice').innerText = `${name} — ${id}`;
+      loadTransactions(id);
+      fetchAccounts();
+    }
+
+    async function loadTransactions(accountId, filter = 'all') {
+      if (!accountId) return;
+      const url = filter === 'all' 
+        ? `/api/v1/accounts/${accountId}/transactions`
+        : `/api/v1/accounts/${accountId}/transactions?type=${filter}`;
+
+      const res = await fetch(url);
+      const json = await res.json();
+      const body = document.getElementById('txnTableBody');
+      body.innerHTML = '';
+
+      const txns = json.data || [];
+      if (txns.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-zinc-400">No transactions recorded for this account.</td></tr>';
+        return;
+      }
+
+      txns.forEach(t => {
+        const tr = document.createElement('tr');
+        const isCredit = t.type === 'credit';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3">
+            <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded ${isCredit ? 'bg-zinc-100 text-zinc-800 border border-zinc-200' : 'bg-zinc-50 text-zinc-600 border border-zinc-200'}">${t.type}</span>
+          </td>
+          <td class="py-2.5 px-3 mono text-xs font-medium ${isCredit ? 'text-zinc-900 font-semibold' : 'text-zinc-600'}">${isCredit ? '+' : '-'}$${Number(t.amount).toFixed(2)}</td>
+          <td class="py-2.5 px-3 text-zinc-600 text-xs">${t.description}</td>
+          <td class="py-2.5 px-3 mono text-[11px] text-zinc-600">${t.reference_id}</td>
+          <td class="py-2.5 px-3 mono text-[11px] text-zinc-600 text-right">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    // 1. Create Account
+    document.getElementById('createAccountForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('accName').value.trim();
+      const res = await fetch('/api/v1/accounts', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Account created for ${data.name}`);
+        document.getElementById('accName').value = '';
+        await fetchAccounts();
+        selectAccount(data.id, data.name);
+      } else {
+        showToast(data.detail || 'Failed to create account', true);
+      }
+    };
+
+    // 2. Submit Transaction
+    document.getElementById('txnForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const accountId = document.getElementById('txnAccountSelect').value;
+      if (!accountId) return showToast('Select or create an account first', true);
+
+      const payload = {
+        type: document.getElementById('txnType').value,
+        amount: parseFloat(document.getElementById('txnAmount').value),
+        description: document.getElementById('txnDesc').value,
+        reference_id: 'REF_' + Math.random().toString(36).substring(2, 9).toUpperCase()
+      };
+
+      const res = await fetch(`/api/v1/accounts/${accountId}/transactions`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Transaction posted: $${payload.amount.toFixed(2)}`);
+        document.getElementById('txnAmount').value = '';
+        document.getElementById('txnDesc').value = '';
+        await fetchAccounts();
+        if (selectedAccountId === accountId) loadTransactions(accountId);
+      } else {
+        showToast(data.detail || 'Transaction failed', true);
+      }
+    };
+
+    // 3. Bilateral Transfer
+    document.getElementById('transferForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const src = document.getElementById('xferFromSelect').value;
+      const dst = document.getElementById('xferToSelect').value;
+      if (src === dst) return showToast('Source and destination must be distinct', true);
+
+      const payload = {
+        source_account_id: src,
+        destination_account_id: dst,
+        amount: parseFloat(document.getElementById('xferAmount').value),
+        reference_id: 'TRF_' + Math.random().toString(36).substring(2, 9).toUpperCase(),
+        description: 'Bilateral Transfer'
+      };
+
+      const res = await fetch('/api/v1/transfers', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Transferred $${payload.amount.toFixed(2)}`);
+        document.getElementById('xferAmount').value = '';
+        await fetchAccounts();
+        if (selectedAccountId) loadTransactions(selectedAccountId);
+      } else {
+        showToast(data.detail || 'Transfer failed', true);
+      }
+    };
+
+    // Auto-fetch accounts on initial page load
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchAccounts();
+    });
+  </script>
+</body>
+</html>
